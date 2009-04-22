@@ -27,9 +27,6 @@ public class CreateImage
     JGraph jgraph;
 	ArrayList<ArrayList<Position>> connectedComponents = new ArrayList<ArrayList<Position>>();
 	private int threads;
-	
-	
-//	In the current scheme, it creates a new Position for minP every time. 
 
     public void create()
     {
