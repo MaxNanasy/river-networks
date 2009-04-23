@@ -1,10 +1,12 @@
 
+import java.awt.Color;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Random;
 import java.util.Scanner;
 //java DetermineEdges realData.txt 6000 6000 -Xms64m -Xmx256m
 public class DetermineEdges {
@@ -19,7 +21,7 @@ public class DetermineEdges {
     private static ArrayList<Integer> row2;
     private static ArrayList<Integer> row3;
     private static int[][] data;
-    private static int[] colors;
+    //private static int[] colors;
     private static int threads = 1;
     private static String fileName ="";
     private static long current_time = 0, elapsed_time = 0, after_time =0;
@@ -35,7 +37,7 @@ public class DetermineEdges {
 
     private static Integer colorIndex = 0; //keeps track of the number of colors there are;
     private static final int VISITED = 10;
-    
+    private static Random randGen = new Random ();
     
     //arguments
     //	1: fileName
@@ -59,10 +61,10 @@ public class DetermineEdges {
             	System.exit(-1);
             }           
             
-           /* outFile = new FileOutputStream(args[0]+".edges");
+            outFile = new FileOutputStream(args[0]+".edges");
             fileData = new PrintStream( outFile );
             inputFile = new File(args[0]);
-            s = new Scanner(inputFile);   */
+            s = new Scanner(inputFile);   
             data = new int[ROW_SIZE][ROW_INDEX_MAX];
        
         }
@@ -76,8 +78,8 @@ public class DetermineEdges {
         row1 = new ArrayList<Integer>();
         row2 = new ArrayList<Integer>();
         row3 = new ArrayList<Integer>();
-        //System.out.println("=============PARSING FILE=================");
-        //parseFile();
+        System.out.println("=============PARSING FILE=================");
+        parseFile();
        
         System.out.println("=============LOADING EDGE DATA INTO MEMORY=================");
         loadEdgeData(args[0]+".edges"); 
@@ -97,7 +99,7 @@ public class DetermineEdges {
         outputCCData(args[0]);
         System.out.println("=============MAKING IMAGE!!=================");
         
-        //createImage(args[0]);
+        createImage(args[0]);
         System.out.println("=============DONE DONE DONE!!=================");
 		}
 
@@ -162,22 +164,38 @@ public class DetermineEdges {
 	private static void createImage(String fileName)
 	{
 		Scanner s;
-		int color = 0;
-		
+		File file;
+		BitmapWriter imageCreator;
+		Color[] colorArray = new Color[colorIndex];
 		try
 		{
-			s = new Scanner(fileName+".CC");
-			int tempC = 0;
-			String tempS = "";
+			file = new File(fileName+".CC");
+			s = new Scanner(file);
+			
+
+			
+				imageCreator = new BitmapWriter(fileName+".bmp", ROW_SIZE, ROW_INDEX_MAX);
+	
+		
+			//String tempS = "";
+			Color colorTemp;
 			while(s.hasNext())
 			{
-				tempC = s.nextInt();
-				tempS = Integer.toString(tempC);
-				tempS = tempS.substring(2);
-				tempC = Integer.parseInt(tempS);
+				int tempN = s.nextInt();
+				if(colorArray[tempN] != null)
+					colorTemp = colorArray[tempN];
+				else
+				{
+					colorArray[tempN] = new Color(randGen.nextInt());
+					colorTemp = colorArray[tempN];
+				}
+				//colorTemp = new Color(s.nextInt());
+				imageCreator.writePixel(colorTemp);
+			
 			}
 			
 			s.close();
+			imageCreator.close();
 		}
 		catch(Exception e)
 		{
@@ -206,18 +224,22 @@ public class DetermineEdges {
 		
 		FileOutputStream outFile1;
 		PrintStream fileData1;
+		String temp;
 		try{
 			outFile1 = new FileOutputStream(fileName+".CC");
 			fileData1 = new PrintStream( outFile1 );
 			current_time = System.currentTimeMillis();
 			for(int i =0; i < ROW_SIZE; i++)
 			{
-				fileData1.print(data[i][0] +" ");
+				temp = Integer.toString(data[i][0]).substring(2);
+				fileData1.print(temp +" ");
 				for(int j = 1; j <ROW_INDEX_MAX -1; j++)
 				{
-					fileData1.print(data[i][j] + " ");
+					temp = Integer.toString(data[i][j]).substring(2);
+					fileData1.print(temp + " ");
 				}
-				fileData1.println(data[i][ROW_INDEX_MAX-1]);
+				temp = Integer.toString(data[i][ROW_INDEX_MAX-1]).substring(2);
+				fileData1.println(temp);
 				
 				if(i%1000 ==0)
 				{
@@ -295,7 +317,7 @@ public class DetermineEdges {
 		int ccIndex = 0;
 		
 		boolean end = false;
-		int colorIndexTemp = 0;
+		int colorIndexTemp = 1;
 		//System.out.println("FIRST EDGE: " + edge);
 		//int multiplier = 10;
 		String colorTracker ="";
@@ -311,10 +333,12 @@ public class DetermineEdges {
 			//System.out.println("rowIndex: " + rowIndex + " columnIndex: "+ columnIndex);
 			if(edge >= VISITED)
 			{
+				//System.out.println("visitied: " + rowIndex + " " + columnIndex + " " +edge);
 				//System.out.println("ALREADY VISITED!");
 				//System.out.println("original edge: " + edge);
 				String tempString = Integer.toString(edge);
 				colorTracker = tempString.substring(2);
+				//System.out.println("Colortracker: " + colorTracker);
 				//System.out.println("color from edge: " + colorTracker);
 				
 				edge = VISITED; //make it go to case VISITED.			
@@ -335,7 +359,7 @@ public class DetermineEdges {
 					
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex--;
 					columnIndex--;
@@ -346,7 +370,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex--;
 					ccIndex++;
@@ -356,7 +380,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex--;
 					columnIndex++;
@@ -367,7 +391,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					columnIndex++;
 					ccIndex++;
@@ -376,7 +400,7 @@ public class DetermineEdges {
 					edge = edge+VISITED; //make it visited
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex = rowIndex + 1;
 					columnIndex = columnIndex + 1;
@@ -387,7 +411,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex++;
 					ccIndex++;
@@ -397,7 +421,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					rowIndex++;
 					columnIndex--;
@@ -408,7 +432,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					columnIndex--;
 					ccIndex++;
@@ -422,7 +446,7 @@ public class DetermineEdges {
 					//ccIndex++;
 					ccRows[ccIndex] = rowIndex;
 					ccColumns[ccIndex] = columnIndex;
-					colorTracker = Integer.toString(colorIndexTemp);
+					//colorTracker = Integer.toString(colorIndexTemp);
 					ccValues[ccIndex] = edge;
 					ccIndex++;
 					end = true;
@@ -434,14 +458,19 @@ public class DetermineEdges {
 		}
 		if(!isVisited)
 		{
+			//System.out.println("Not visited!");
 			synchronized(colorIndex) {colorIndex++; colorIndexTemp = colorIndex;}
+			
 			colorTracker = Integer.toString(colorIndexTemp);
 		}
 		
 		//coloring
 		for(int i = 0; i < ccIndex; i++)
 		{
+			//uncomment line below if you want values+ color
 			String temp = ccValues[i] + colorTracker;
+			
+			//String temp = colorTracker; //only keep track of colors.
 			
 			int edgeTemp = Integer.parseInt(temp);
 			//System.out.println("TEMPVALUE: " + temp);
