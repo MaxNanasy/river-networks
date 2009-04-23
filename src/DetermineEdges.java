@@ -139,7 +139,7 @@ public class DetermineEdges {
 					outputCCData(fileName);
 					System.out.println("=============MAKING IMAGE!!=================");
         
-					//createImage(args[0]);
+					createImage(fileName);
 					System.out.println("=============DONE DONE DONE!!=================");
 					System.exit(0);
         			
@@ -201,6 +201,7 @@ public class DetermineEdges {
 		{
 			System.out.println("File " + fileName+".CC could not be open.");
 		}
+		System.out.println("Image " + fileName + ".bmp was created.");
 		
 	}
 	private static ArrayList<Integer> findRanges()
