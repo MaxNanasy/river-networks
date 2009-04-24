@@ -78,7 +78,7 @@ public class DetermineEdges {
         row1 = new ArrayList<Integer>();
         row2 = new ArrayList<Integer>();
         row3 = new ArrayList<Integer>();
-        System.out.println("=============PARSING FILE=================");
+        //System.out.println("=============PARSING FILE=================");
         parseFile();
        
         System.out.println("=============LOADING EDGE DATA INTO MEMORY=================");
