@@ -102,6 +102,54 @@ public class DetermineEdges {
         outputCCDataAndCreateImage();
 		
 	}
+	private static void outputCCDataTemp(int row)
+	{
+        System.out.println("=============MAKING TEMPORARY CC FILE (up to row " + row + ")=================");
+		FileOutputStream outFile1;
+		PrintStream fileData1;
+		String temp ="";
+		try{
+			outFile1 = new FileOutputStream(fileName+row+".CC");
+			fileData1 = new PrintStream( outFile1 );
+			current_time = System.currentTimeMillis();
+			for(int i =0; i < ROW_SIZE; i++)
+			{
+				//System.out.println("data: " + i + " : " +data[i][0]);
+				temp = Integer.toString(data[i][0]).substring(2);
+				fileData1.print(temp +" ");
+				for(int j = 1; j <ROW_INDEX_MAX -1; j++)
+				{
+					temp = Integer.toString(data[i][j]).substring(2);
+					fileData1.print(temp + " ");
+				}
+				temp = Integer.toString(data[i][ROW_INDEX_MAX-1]).substring(2);
+				fileData1.println(temp);
+				
+				if(i%1000 ==0)
+				{
+					after_time = System.currentTimeMillis();
+					elapsed_time = (after_time - current_time) / 1000;
+					System.out.println("Time to output CC data into file for 1000 rows: "+elapsed_time);
+					current_time = after_time;
+				}
+
+			}	
+			fileData1.close();
+			outFile1.close();
+			System.out.println("ColorIndex = : " +colorIndex);
+			
+		}
+		catch(IOException e)
+		
+	
+		{
+			System.out.println("File could not be accessed.");
+		}		
+		catch (StringIndexOutOfBoundsException e)
+		{
+			System.out.println(temp);
+		}
+	}
 	
 	private static void outputCCDataAndCreateImage()
 	{
@@ -324,6 +372,10 @@ public class DetermineEdges {
 		
 		for(int i = start; i < end; i++)
 		{
+			//every 1000 rows, making temp CC file to keep track of progress.
+			if(i%1000 == 0 && i != 0)
+				outputCCDataTemp(i);
+			
 			for(int j = 0; j < ROW_INDEX_MAX; j++)
 			{
 				searchCC(i, j);
@@ -334,13 +386,15 @@ public class DetermineEdges {
 			System.out.println(threadID+ ": Time to find CC for 1000 items (row " + i+") : "+elapsed_time +" seconds.");
 			current_time = after_time;
 			
+			
+			
 		}	
 		
 	}
 
 	private static void searchCC(int row, int column)
 	{
-		System.out.println("===========================================================");
+		//System.out.println("===========================================================");
 		int rowIndex = row;
 		int columnIndex = column;
 		int edge;
