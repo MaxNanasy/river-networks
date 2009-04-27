@@ -61,11 +61,11 @@ public class DetermineEdges {
             	System.exit(-1);
             }           
             
-            outFile = new FileOutputStream(args[0]+".edges");
+            /*outFile = new FileOutputStream(args[0]+".edges");
             fileData = new PrintStream( outFile );
             inputFile = new File(args[0]);
-            s = new Scanner(inputFile);   
-            data = new int[ROW_SIZE][ROW_INDEX_MAX];
+            s = new Scanner(inputFile);  */ 
+           
        
         }
         
@@ -74,12 +74,16 @@ public class DetermineEdges {
             System.err.println("init: Errors accessing output file: "+args[0]+".edges");
             System.exit(-2);
         }
-        
+         data = new int[ROW_SIZE][ROW_INDEX_MAX];
         row1 = new ArrayList<Integer>();
         row2 = new ArrayList<Integer>();
         row3 = new ArrayList<Integer>();
+        
+        //testForCycle();
+        
+       
         //System.out.println("=============PARSING FILE=================");
-        parseFile();
+        //parseFile();
        
         System.out.println("=============LOADING EDGE DATA INTO MEMORY=================");
         loadEdgeData(args[0]+".edges"); 
@@ -93,18 +97,48 @@ public class DetermineEdges {
         else
 		{
         	findCC();
-        System.out.println("=============OUTPUTTING CC INTO FILE=================");
-        
-        
-        outputCCData(args[0]);
-        System.out.println("=============MAKING IMAGE!!=================");
-        
-        createImage(args[0]);
-        System.out.println("=============DONE DONE DONE!!=================");
 		}
-
-
+        
+        outputCCDataAndCreateImage();
+		
 	}
+	
+	private static void outputCCDataAndCreateImage()
+	{
+		System.out.println("=============OUTPUTTING CC INTO FILE=================");
+        
+        outputCCData(fileName);
+       // System.out.println("=============MAKING IMAGE!!=================");
+        
+        //createImage(fileName);
+        System.out.println("=============DONE DONE DONE!!=================");
+	}
+	/*
+	private static void testForCycle()
+	{
+		int col = 0;
+		int row = 0;
+		int temp = 0;
+		for(int i = 0; i < ROW_SIZE; i++)
+		{
+			for(int j = 0; j < ROW_INDEX_MAX; j++)
+			{
+				data[i][j] = s.nextInt();
+				if( j == 4324 && i == 5999)
+					
+				if(j == 4325 && i == 5999)
+					System.out.println("col: " + col +" row: " + row + " value: " + temp);
+					
+			}
+			if(i%1000 == 0)
+				System.out.println("parsed 1000 numbers");
+		}
+		System.out.println(data[5996][4323] + " " + data[5996][4324] +" "+ data[5996][4325] +" "+ data[5996][4326]);
+		System.out.println(data[5997][4323] + " " + data[5997][4324] +" "+ data[5997][4325] +" "+ data[5997][4326]);
+		System.out.println(data[5998][4323] + " " + data[5998][4324] +" "+ data[5998][4325] +" "+ data[5998][4326]);
+		System.out.println(data[5999][4323] + " " + data[5999][4324] +" "+ data[5999][4325] +" "+ data[5999][4326]);
+	}*/
+	
     private static class Cell <a> { public a object; public Cell (a object) { this.object = object; } }
     
 	private static void startThreads() throws Exception
@@ -133,14 +167,7 @@ public class DetermineEdges {
         		synchronized (threadsActive) { lastThread = -- threadsActive.object == 0; }
         		if (lastThread) {
         			System.out.println("Last thread: "+this.getId()+" finishing up...");
-					        System.out.println("=============OUTPUTTING CC INTO FILE=================");
-        
-        
-					outputCCData(fileName);
-					System.out.println("=============MAKING IMAGE!!=================");
-        
-					createImage(fileName);
-					System.out.println("=============DONE DONE DONE!!=================");
+        			outputCCDataAndCreateImage();
 					System.exit(0);
         			
         		}
@@ -153,12 +180,13 @@ public class DetermineEdges {
     		FindCCThread thread = new FindCCThread(ranges.get(2*i), ranges.get(2*i + 1));
     		thread.start();
     	}
-    	/*FindCCThread midthread = new FindCCThread(0,3);
+		
+    	/*FindCCThread midthread = new FindCCThread(2997,3000);
     	midthread.start();
     	
-    	FindCCThread endThread = new FindCCThread(4, 7);
-    	endThread.start();*/
-    	
+    	FindCCThread endThread = new FindCCThread(5997, 6000);
+    	endThread.start();
+    	*/
     	Thread.currentThread().join();
 	}
 	private static void createImage(String fileName)
@@ -189,7 +217,7 @@ public class DetermineEdges {
 					colorArray[tempN] = new Color(randGen.nextInt());
 					colorTemp = colorArray[tempN];
 				}
-				//colorTemp = new Color(s.nextInt());
+				//colorTemp = new Color(s.nextInt() * 30);
 				imageCreator.writePixel(colorTemp);
 			
 			}
@@ -225,13 +253,14 @@ public class DetermineEdges {
 		
 		FileOutputStream outFile1;
 		PrintStream fileData1;
-		String temp;
+		String temp ="";
 		try{
 			outFile1 = new FileOutputStream(fileName+".CC");
 			fileData1 = new PrintStream( outFile1 );
 			current_time = System.currentTimeMillis();
 			for(int i =0; i < ROW_SIZE; i++)
 			{
+				//System.out.println("data: " + i + " : " +data[i][0]);
 				temp = Integer.toString(data[i][0]).substring(2);
 				fileData1.print(temp +" ");
 				for(int j = 1; j <ROW_INDEX_MAX -1; j++)
@@ -262,6 +291,10 @@ public class DetermineEdges {
 		{
 			System.out.println("File could not be accessed.");
 		}		
+		catch (StringIndexOutOfBoundsException e)
+		{
+			System.out.println(temp);
+		}
 	}
 	public static void findCC()
 	{
@@ -307,6 +340,7 @@ public class DetermineEdges {
 
 	private static void searchCC(int row, int column)
 	{
+		System.out.println("===========================================================");
 		int rowIndex = row;
 		int columnIndex = column;
 		int edge;
@@ -319,143 +353,134 @@ public class DetermineEdges {
 		
 		boolean end = false;
 		int colorIndexTemp = 1;
-		//System.out.println("FIRST EDGE: " + edge);
-		//int multiplier = 10;
+
 		String colorTracker ="";
-		//if the start of the cc is not visited, then make a new color index;
-		/*if(edge < VISITED)
-		{
-			//synchronized(colorIndex) {colorIndex++; colorIndexTemp = colorIndex;}
-		}*/
+	
 		
 		boolean isVisited = false;
 		while(!end)
 		{
+			//System.out.println("colIndex: " + columnIndex + " rowIndex: " + rowIndex + " ccIndex: " + ccIndex);
 			//System.out.println("rowIndex: " + rowIndex + " columnIndex: "+ columnIndex);
 			if(edge >= VISITED)
 			{
-				//System.out.println("visitied: " + rowIndex + " " + columnIndex + " " +edge);
-				//System.out.println("ALREADY VISITED!");
-				//System.out.println("original edge: " + edge);
-				String tempString = Integer.toString(edge);
-				colorTracker = tempString.substring(2);
-				//System.out.println("Colortracker: " + colorTracker);
-				//System.out.println("color from edge: " + colorTracker);
 				
+				String tempString = Integer.toString(edge);
+				colorTracker = tempString.substring(2);				
 				edge = VISITED; //make it go to case VISITED.			
-				//synchronized(colorIndex) {colorIndex = colorIndex - 1;} //revert the colorIndex back since everything will be turned into color of the already visited node.
+				
 				if(colorIndex<1)
 					synchronized(colorIndex) {colorIndex = 1;}
 					
 				isVisited = true;
+				end = true;
 			}
-			
-			
-								
-
-			switch(edge)
+			else
 			{
-				case TOP_LEFT:
-					edge = edge+VISITED; //make it visited
-					
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex--;
-					columnIndex--;
-					ccIndex++;
-				break;
-				case TOP:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex--;
-					ccIndex++;
+				switch(edge)
+				{
+					case TOP_LEFT:
+						edge = edge+VISITED; //make it visited
+						
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex--;
+						columnIndex--;
+						ccIndex++;
 					break;
-				case TOP_RIGHT:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex--;
-					columnIndex++;
-					ccIndex++;
-					break;
-				case RIGHT:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					columnIndex++;
-					ccIndex++;
-					break;
-				case BOTTOM_RIGHT:
-					edge = edge+VISITED; //make it visited
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex = rowIndex + 1;
-					columnIndex = columnIndex + 1;
-					ccIndex++;
-					break;
-				case BOTTOM:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex++;
-					ccIndex++;
-					break;
-				case BOTTOM_LEFT:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					rowIndex++;
-					columnIndex--;
-					ccIndex++;
-					break;
-				case LEFT:
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					columnIndex--;
-					ccIndex++;
-					break;
-				case VISITED:
-					end=true;
-					break;
-				default: //case with no edges going out.
-					//System.out.println("End of one CC: " + edge);
-					edge = edge+VISITED; //make it visited
-					//ccIndex++;
-					ccRows[ccIndex] = rowIndex;
-					ccColumns[ccIndex] = columnIndex;
-					//colorTracker = Integer.toString(colorIndexTemp);
-					ccValues[ccIndex] = edge;
-					ccIndex++;
-					end = true;
-					break;
+					case TOP:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex--;
+						ccIndex++;
+						break;
+					case TOP_RIGHT:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex--;
+						columnIndex++;
+						ccIndex++;
+						break;
+					case RIGHT:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						columnIndex++;
+						ccIndex++;
+						break;
+					case BOTTOM_RIGHT:
+						edge = edge+VISITED; //make it visited
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex = rowIndex + 1;
+						columnIndex = columnIndex + 1;
+						ccIndex++;
+						break;
+					case BOTTOM:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex++;
+						ccIndex++;
+						break;
+					case BOTTOM_LEFT:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						rowIndex++;
+						columnIndex--;
+						ccIndex++;
+						break;
+					case LEFT:
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						columnIndex--;
+						ccIndex++;
+						break;
+					case VISITED:
+						end=true;
+						break;
+					default: //case with no edges going out.
+						//System.out.println("End of one CC: " + edge);
+						edge = edge+VISITED; //make it visited
+						//ccIndex++;
+						ccRows[ccIndex] = rowIndex;
+						ccColumns[ccIndex] = columnIndex;
+						//colorTracker = Integer.toString(colorIndexTemp);
+						ccValues[ccIndex] = edge;
+						ccIndex++;
+						end = true;
+						break;
+				}
+				
+				synchronized(data) {edge = data[rowIndex][columnIndex];} //travel to along edge to next vertex.
 			}
-			//System.out.println("current Edge: "+edge);
-			synchronized(data) {edge = data[rowIndex][columnIndex];} //travel to along edge to next vertex.
-			//System.out.println("next Edge: "+edge);
+			
 		}
 		if(!isVisited)
 		{
@@ -556,9 +581,9 @@ public class DetermineEdges {
 				System.out.println("Time to parse + find edges for 1000 rows: " + elapsed_time + " seconds");
 				current_time = after_time;
 			}
-			int max = 0;
+			//int max = 0;
 			int neighbor =0;
-			
+			int min = 0;
 			//doing first number
 			int current = row2.get(0);
 			int topLeft = 0;
@@ -570,31 +595,31 @@ public class DetermineEdges {
 			int btmLeft = 0;
 			int left = 0;
 			
-			
-			max = current;
-			if(max < top)
+			min = current;
+			//max = current;
+			if(min > top)
 			{
-				max = top;
+				min = top;
 				neighbor = TOP;
 			}
-			if(max < topRight)
+			if(min > topRight)
 			{
-				max = topRight;
+				min = topRight;
 				neighbor = TOP_RIGHT;
 			}
-			if(max < right)
+			if(min > right)
 			{
-				max = right;
+				min = right;
 				neighbor = RIGHT;
 			}
-			if(max < btmRight)
+			if(min > btmRight)
 			{
-				max = btmRight;
+				min = btmRight;
 				neighbor = BOTTOM_RIGHT;
 			}
-			if(max < btm)
+			if(min > btm)
 			{
-				max = btm;
+				min = btm;
 				neighbor = BOTTOM;
 			}
 			fileData.print(neighbor + " ");
@@ -605,6 +630,7 @@ public class DetermineEdges {
 			{
 				neighbor = 0;
 				current = row2.get(i);
+				
 				topLeft = row1.get(i-1);
 				top = row1.get(i);
 				topRight = row1.get(i+1);
@@ -613,47 +639,47 @@ public class DetermineEdges {
 				btm = row3.get(i);
 				btmLeft = row3.get(i-1);
 				left = row2.get(i-1);
-				max = current;
+				min = current;
 				
-				if(max<topLeft)
+				if(min > topLeft)
 				{
-					max = topLeft;
+					min = topLeft;
 					neighbor = TOP_LEFT;
 				}
-				if(max < top)
+				if(min > top)
 				{
-					max = top;
+					min = top;
 					neighbor = TOP;
 				}
-				if(max < topRight)
+				if(min > topRight)
 				{
-					max = topRight;
+					min = topRight;
 					neighbor = TOP_RIGHT;
 				}
-				if(max < right)
+				if(min > right)
 				{
-					max = right;
+					min = right;
 					neighbor = RIGHT;
 					
 				}
-				if(max < btmRight)
+				if(min > btmRight)
 				{
-					max = btmRight;
+					min = btmRight;
 					neighbor = BOTTOM_RIGHT;
 				}
-				if(max <btm)
+				if(min > btm)
 				{
-					max = btm;
+					min = btm;
 					neighbor = BOTTOM;
 				}
-				if(max <btmLeft)
+				if(min > btmLeft)
 				{
-					max = btmLeft;
+					min = btmLeft;
 					neighbor = BOTTOM_LEFT;
 				}
-				if(max < left)
+				if(min > left)
 				{
-					max = left;
+					min = left;
 					neighbor = LEFT;
 				}
 				
@@ -663,37 +689,39 @@ public class DetermineEdges {
 			
 			//find edge for last number
 			current = row2.get(ROW_SIZE -1);
+			
 			btm = row3.get(ROW_SIZE-1);
 			btmLeft = row3.get(ROW_SIZE -2);
 			left = row2.get(ROW_SIZE-2);
 			topLeft = row1.get(ROW_SIZE-2);
 			top = row1.get(ROW_SIZE -1);
 			neighbor =0;
-			max = current;
 			
-			if(max < btm)
+			min = current;
+			
+			if(min > btm)
 			{
-				max = btm;
+				min = btm;
 				neighbor = BOTTOM;
 			}
-			if(max < btmLeft)
+			if(min > btmLeft)
 			{
-				max = btmLeft;
+				min = btmLeft;
 				neighbor = BOTTOM_LEFT;
 			}
-			if(max < left)
+			if(min > left)
 			{
-				max = left;
+				min = left;
 				neighbor = LEFT;
 			}
-			if(max < topLeft)
+			if(min > topLeft)
 			{
-				max = topLeft;
+				min = topLeft;
 				neighbor = TOP_LEFT;
 			}
-			if(max < top)
+			if(min > top)
 			{
-				max = top;
+				min = top;
 				neighbor = TOP;
 			}
 			fileData.println(neighbor);
@@ -711,10 +739,11 @@ public class DetermineEdges {
 	
 	private static void parseLastLine()
 	{
-		int max = 0;
+		int min = 0;
 		
 		//doing first number
 		int current = row3.get(0);
+		
 		int topLeft = 0;
 		int top = row2.get(0);
 		int topRight = row2.get(1);
@@ -725,20 +754,20 @@ public class DetermineEdges {
 		int left = 0;
 		int neighbor =0;
 		
-		max = current;
-		if(max < top)
+		min = current;
+		if(min > top)
 		{
-			max = top;
+			min = top;
 			neighbor = TOP;
 		}
-		if(max < topRight)
+		if(min > topRight)
 		{
-			max = topRight;
+			min = topRight;
 			neighbor = TOP_RIGHT;
 		}
-		if(max < right)
+		if(min > right)
 		{
-			max = right;
+			min = right;
 			neighbor = RIGHT;
 		}
 		fileData.print(neighbor + " ");
@@ -749,40 +778,42 @@ public class DetermineEdges {
 		{
 			neighbor = 0;
 			current = row3.get(i);
+			
 			topLeft = row2.get(i-1);
 			top = row2.get(i);
 			topRight = row2.get(i+1);
-			right = row1.get(i+1);
+			right = row3.get(i+1);
 		    //btmRight = row2.get(i+1);
 			//btm = row2.get(i);
 			//btmLeft = row2.get(i-1);
 			left = row3.get(i-1);
-			max = current;
 			
-			if(max < topLeft)
+			min = current;
+			
+			if(min > topLeft)
 			{
-				max = topLeft;
+				min = topLeft;
 				neighbor = TOP_LEFT;
 				
 			}
-			if(max < top)
+			if(min> top)
 			{
-				max = top;
+				min = top;
 				neighbor = TOP;
 			}
-			if(max <topRight)
+			if(min >topRight)
 			{
-				max = topRight;
+				min = topRight;
 				neighbor = TOP_RIGHT;
 			}
-			if(max <right)
+			if(min >right)
 			{
-				max = right;
+				min = right;
 				neighbor = RIGHT;
 			}
-			if(max < left)
+			if(min > left)
 			{
-				max = left;
+				min = left;
 				neighbor = LEFT;
 			}
 			
@@ -792,6 +823,7 @@ public class DetermineEdges {
 		
 		//find edge for last number
 		current = row3.get(ROW_SIZE -1);
+		
 		topLeft = row2.get(ROW_SIZE -2);
 		top = row2.get(ROW_SIZE -1);
 		//btm = row2.get(ROW_SIZE-1);
@@ -799,21 +831,21 @@ public class DetermineEdges {
 		left = row3.get(ROW_SIZE-2);
 		
 		neighbor =0;
-		max = current;
+		min = current;
 		
-		if(max < topLeft)
+		if(min > topLeft)
 		{
-			max = topLeft;
+			min = topLeft;
 			neighbor = TOP_LEFT;
 		}
-		if(max < top)
+		if(min > top)
 		{
-			max = top;
+			min = top;
 			neighbor = TOP;
 		}
-		if(max < left)
+		if(min > left)
 		{
-			max = left;
+			min = left;
 			neighbor = LEFT;
 		}
 		fileData.println(neighbor);
@@ -838,8 +870,8 @@ public class DetermineEdges {
 		}
 		rowIndex = 3;
 		
-		int max = 0;
-		
+		//int max = 0;
+		int min = 0;
 		//doing first number
 		int current = row1.get(0);
 		int right = row1.get(1);
@@ -849,20 +881,21 @@ public class DetermineEdges {
 		int left = 0;
 		int neighbor =0;
 		
-		max = current;
-		if(max < right)
+		min = current;
+		//max = current;
+		if(min > right)
 		{
-			max = right;
+			min = right;
 			neighbor = RIGHT;
 		}
-		if(max < btmRight)
+		if(min > btmRight)
 		{
-			max = btmRight;
+			min = btmRight;
 			neighbor = BOTTOM_RIGHT;
 		}
-		if(max < btm)
+		if(min > btm)
 		{
-			max = btm;
+			min = btm;
 			neighbor = BOTTOM;
 		}
 		fileData.print(neighbor + " ");
@@ -873,37 +906,39 @@ public class DetermineEdges {
 		{
 			neighbor = 0;
 			current = row1.get(i);
+			
 			right = row1.get(i+1);
 		    btmRight = row2.get(i+1);
 			btm = row2.get(i);
 			btmLeft = row2.get(i-1);
 			left = row1.get(i-1);
-			max = current;
 			
-			if(max < right)
+			min = current;
+			
+			if(min > right)
 			{
-				max = right;
+				min = right;
 				neighbor = RIGHT;
 				
 			}
-			if(max < btmRight)
+			if(min > btmRight)
 			{
-				max = btmRight;
+				min = btmRight;
 				neighbor = BOTTOM_RIGHT;
 			}
-			if(max <btm)
+			if(min > btm)
 			{
-				max = btm;
+				min = btm;
 				neighbor = BOTTOM;
 			}
-			if(max <btmLeft)
+			if(min > btmLeft)
 			{
-				max = btmLeft;
+				min = btmLeft;
 				neighbor = BOTTOM_LEFT;
 			}
-			if(max < left)
+			if(min > left)
 			{
-				max = left;
+				min = left;
 				neighbor = LEFT;
 			}
 			
@@ -917,21 +952,21 @@ public class DetermineEdges {
 		btmLeft = row2.get(ROW_SIZE -2);
 		left = row1.get(ROW_SIZE-2);
 		neighbor =0;
-		max = current;
+		min = current;
 		
-		if(max < btm)
+		if(min > btm)
 		{
-			max = btm;
+			min = btm;
 			neighbor = BOTTOM;
 		}
-		if(max < btmLeft)
+		if(min > btmLeft)
 		{
-			max = btmLeft;
+			min = btmLeft;
 			neighbor = BOTTOM_LEFT;
 		}
-		if(max < left)
+		if(min > left)
 		{
-			max = left;
+			min = left;
 			neighbor = LEFT;
 		}
 		fileData.println(neighbor);
