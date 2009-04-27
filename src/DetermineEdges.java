@@ -39,6 +39,10 @@ public class DetermineEdges {
     private static final int VISITED = 10;
     private static Random randGen = new Random ();
     
+    // keeps track of whether a thread has reached every thousandth row rows. If one has, then set it to that value.
+    //Used only for multitheading.
+    private static Integer row_thread_syn; 
+    
     //arguments
     //	1: fileName
     //	2. ROW_SIZE
@@ -47,7 +51,7 @@ public class DetermineEdges {
 	public static void main(String args[]) throws Exception
 	{
         try {
- 
+        	row_thread_syn = 0;
             fileName = args[0];
             ROW_SIZE = Integer.parseInt(args[1]);
             ROW_INDEX_MAX = Integer.parseInt(args[2]);
@@ -66,7 +70,6 @@ public class DetermineEdges {
             inputFile = new File(args[0]);
             s = new Scanner(inputFile);  */ 
            
-       
         }
         
         catch (Exception e) {
@@ -102,52 +105,63 @@ public class DetermineEdges {
         outputCCDataAndCreateImage();
 		
 	}
-	private static void outputCCDataTemp(int row)
+	private static void outputCCDataTemp(int row, int threadID)
 	{
-        System.out.println("=============MAKING TEMPORARY CC FILE (up to row " + row + ")=================");
+		long after_time = 0;
+		long elapsed_time = 0;
+		long current_time = 0;
+		
+        System.out.println("============="+ threadID + ": MAKING TEMPORARY CC FILE (up to row " + row + ")=================");
 		FileOutputStream outFile1;
 		PrintStream fileData1;
 		String temp ="";
-		try{
-			outFile1 = new FileOutputStream(fileName+row+".CC");
-			fileData1 = new PrintStream( outFile1 );
-			current_time = System.currentTimeMillis();
-			for(int i =0; i < ROW_SIZE; i++)
-			{
-				//System.out.println("data: " + i + " : " +data[i][0]);
-				temp = Integer.toString(data[i][0]).substring(2);
-				fileData1.print(temp +" ");
-				for(int j = 1; j <ROW_INDEX_MAX -1; j++)
+		synchronized(data)
+		{
+			try{
+				outFile1 = new FileOutputStream(fileName+row+".CC");
+				fileData1 = new PrintStream( outFile1 );
+				current_time = System.currentTimeMillis();
+				for(int i =0; i < ROW_SIZE; i++)
 				{
-					temp = Integer.toString(data[i][j]).substring(2);
-					fileData1.print(temp + " ");
-				}
-				temp = Integer.toString(data[i][ROW_INDEX_MAX-1]).substring(2);
-				fileData1.println(temp);
-				
-				if(i%1000 ==0)
-				{
-					after_time = System.currentTimeMillis();
-					elapsed_time = (after_time - current_time) / 1000;
-					System.out.println("Time to output CC data into file for 1000 rows: "+elapsed_time);
-					current_time = after_time;
-				}
-
-			}	
-			fileData1.close();
-			outFile1.close();
-			System.out.println("ColorIndex = : " +colorIndex);
-			
-		}
-		catch(IOException e)
-		
+					//System.out.println("data: " + i + " : " +data[i][0]);
+					temp = Integer.toString(data[i][0]);
+					fileData1.print(temp +" ");
+					for(int j = 1; j <ROW_INDEX_MAX -1; j++)
+					{
+						temp = Integer.toString(data[i][j]);
+						fileData1.print(temp + " ");
+					}
+					temp = Integer.toString(data[i][ROW_INDEX_MAX-1]);
+					if(i == ROW_SIZE -1)
+						fileData1.print(temp);
+					else
+						fileData1.println(temp);
+					
+					if(i%1000 ==0)
+					{
+						after_time = System.currentTimeMillis();
+						elapsed_time = (after_time - current_time) / 1000;
+						System.out.println("Time to output CC data into file for 1000 rows: "+elapsed_time);
+						current_time = after_time;
+					}
 	
-		{
-			System.out.println("File could not be accessed.");
-		}		
-		catch (StringIndexOutOfBoundsException e)
-		{
-			System.out.println(temp);
+				}	
+				fileData1.close();
+				outFile1.close();
+				System.out.println("ColorIndex = : " +colorIndex);
+				System.out.println("============="+ threadID + ": DONE TEMPORARY CC FILE (up to row " + row + ")=================");
+				
+			}
+			catch(IOException e)
+			
+		
+			{
+				System.out.println("File could not be accessed.");
+			}		
+			catch (StringIndexOutOfBoundsException e)
+			{
+				System.out.println(temp);
+			}
 		}
 	}
 	
@@ -192,9 +206,11 @@ public class DetermineEdges {
 	private static void startThreads() throws Exception
 	{
 	//	final int threads = 0;
-	    	ArrayList<Integer> ranges = findRanges();
+		//int threadCount = ROW_SIZE / 1000;
+	    	ArrayList<Integer> ranges = findRanges(ROW_SIZE, threads);
 	   	final Cell <Integer> threadsActive = new Cell <Integer> (threads);
-		class FindCCThread extends Thread {
+		
+	   	class FindCCThread extends Thread {
 
         	int startRow = 0;
         	int endRow = 0;
@@ -216,25 +232,27 @@ public class DetermineEdges {
         		if (lastThread) {
         			System.out.println("Last thread: "+this.getId()+" finishing up...");
         			outputCCDataAndCreateImage();
+        			System.out.println("data: " +data[2000][0]);
 					System.exit(0);
         			
         		}
         	}
         }  
     	
+	   	
 		// create threads
-		for(int i = 0; i < threads; i++)
+		/*for(int i = 0; i < threads; i++)
     	{
     		FindCCThread thread = new FindCCThread(ranges.get(2*i), ranges.get(2*i + 1));
     		thread.start();
     	}
-		
-    	/*FindCCThread midthread = new FindCCThread(2997,3000);
+		*/
+    	FindCCThread midthread = new FindCCThread(1999,2002);
     	midthread.start();
     	
-    	FindCCThread endThread = new FindCCThread(5997, 6000);
+    	FindCCThread endThread = new FindCCThread(4999, 5002);
     	endThread.start();
-    	*/
+    	
     	Thread.currentThread().join();
 	}
 	private static void createImage(String fileName)
@@ -280,9 +298,9 @@ public class DetermineEdges {
 		System.out.println("Image " + fileName + ".bmp was created.");
 		
 	}
-	private static ArrayList<Integer> findRanges()
+	private static ArrayList<Integer> findRanges(int totalRows, int threadCount)
     {
-    	int rowsPerRange = (int) Math.ceil((ROW_SIZE)/ (double)threads);
+    	int rowsPerRange = (int) Math.ceil((totalRows)/ (double)threadCount);
     	ArrayList<Integer> ranges = new ArrayList<Integer>();
     	int startRow =0, endRow = rowsPerRange;
     	for(int i = 0; i < threads; i++)
@@ -294,6 +312,8 @@ public class DetermineEdges {
     	}
     	ranges.set(ranges.size()-1, Math.min(ROW_SIZE, ranges.get(ranges.size() - 1)));
     	System.out.println("Ranges: " + ranges);
+    	
+    	
     	return ranges;
     }
 	public static void outputCCData(String fileName)
@@ -341,7 +361,7 @@ public class DetermineEdges {
 		}		
 		catch (StringIndexOutOfBoundsException e)
 		{
-			System.out.println(temp);
+			System.out.println(temp + " String index out of bounds error.");
 		}
 	}
 	public static void findCC()
@@ -349,6 +369,9 @@ public class DetermineEdges {
 		current_time =  System.currentTimeMillis();
 		for(int i = 0; i < ROW_SIZE; i++)
 		{
+			if(i%1000 == 0 && i != 0)
+				outputCCDataTemp(i, 0);
+			
 			for(int j = 0; j < ROW_INDEX_MAX; j++)
 			{
 				searchCC(i, j);
@@ -368,13 +391,31 @@ public class DetermineEdges {
 		long after_time = 0;
 		long elapsed_time = 0;
 		current_time = System.currentTimeMillis();
-		
+		boolean outputTempCC = false;
 		
 		for(int i = start; i < end; i++)
 		{
+			
 			//every 1000 rows, making temp CC file to keep track of progress.
 			if(i%1000 == 0 && i != 0)
-				outputCCDataTemp(i);
+			{
+				synchronized(row_thread_syn)
+				{
+					if(row_thread_syn == 1000)
+					{
+						outputTempCC = true;
+						row_thread_syn = 0;
+					}
+					else 
+						row_thread_syn = 1000;
+				}
+				
+				if(outputTempCC)
+				{
+					outputCCDataTemp(i, threadID);
+					outputTempCC = false; //reset
+				}
+			}
 			
 			for(int j = 0; j < ROW_INDEX_MAX; j++)
 			{
@@ -394,7 +435,7 @@ public class DetermineEdges {
 
 	private static void searchCC(int row, int column)
 	{
-		//System.out.println("===========================================================");
+		
 		int rowIndex = row;
 		int columnIndex = column;
 		int edge;
